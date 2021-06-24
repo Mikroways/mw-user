@@ -24,7 +24,7 @@ mikroways seleccionados serán autorizados a usar esta cuenta.
 * **`mw_user_url`:** por defecto es `https://mikroways.gitlab.io/public/ssh_keys/_users`. Esta url devuelve un listado de usuarios válidos de mikroways.
 * **`mw_user_key_url`:** url template para descargar la clave pública de un
   usuario. El valor por defecto es `https://mikroways.gitlab.io/public/ssh_keys/%user%.pub`. Puede observarse que el valor de `%user%` es dinámico y será reemplazado por el valor de un usuario válido de mikroways.
- **`mw_user_enabled_users`:** lista de usuarios habilitados. Si es vacío, todos
+* **`mw_user_enabled_users`:** lista de usuarios habilitados. Si es vacío, todos
 los usuarios válidos de mikroways (los listados en `mw_user_url`) serán
 considerados. Caso contrario se realizará la intersección de usuarios válidosm
 con los usernames dados en esta lista.
