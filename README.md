@@ -58,3 +58,11 @@ Luego, en un playbook es posible invocar el role usando:
       tags:
         - user
 ```
+
+## TODO
+
+* [ ] Eliminar usuarios que ya no trabajan con nosotrs. Pensaba que en el repo
+  de nustras claves, podemos agregar quienes se fueron y han trabajado con
+  nosotros. De esta forma el playbook debe eliminar estos usuarios si fueron
+  creados previamente
+* [ ] Mejorar los tests. Faltan probar algunos casos
