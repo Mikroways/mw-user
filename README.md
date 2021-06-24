@@ -33,7 +33,6 @@ con los usernames dados en esta lista.
 [grog.management-user](https://github.com/GROG/ansible-role-management-user)
 
 
-
 ## Ejemplo
 
 Crear un archivo de requerimientos de galaxy `requirements.yml` con el siguiente
@@ -44,4 +43,18 @@ contenido:
 - src: git@gitlab.com:mikroways/ansible/mw-user.git
   scm: git
   version: "1.0.0" 
+```
+
+Luego, en un playbook es posible invocar el role usando:
+
+```yaml
+- name: Some useful playbook
+  hosts: all
+  gather_facts: true
+  tasks:
+    - import_role:
+        name: mikroways.mw_user
+      become: true
+      tags:
+        - user
 ```
