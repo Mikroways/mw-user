@@ -1,0 +1,13 @@
+---
+- name: Retrieve {{ username }} ssh public keys
+  set_fact:
+    user_public_keys: >-
+      {{ lookup('url', mw_user_key_url
+         | replace('%user%', username), wantlist=True)
+      }}
+    authorized_keys: []
+
+- name: Prepare authorized keys
+  set_fact:
+    authorized_keys: "{{  authorized_keys + [ { 'key': item } ] }}"
+  loop: '{{ user_public_keys }}'

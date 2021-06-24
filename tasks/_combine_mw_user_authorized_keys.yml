@@ -1,0 +1,8 @@
+---
+-
+  name: Retrieve {{ username }} ssh pub key
+  include: _retrieve_username_pubkey.yml
+-
+  name: Add pub keys into grouped authorized_keys
+  set_fact:
+    mw_authorized_keys: '{{ mw_authorized_keys + authorized_keys }}'

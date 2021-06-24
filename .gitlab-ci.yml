@@ -1,0 +1,18 @@
+image: python:3-slim
+services:
+  - docker:dind
+
+
+before_script:
+  - pip install ansible==4.1.0 molecule[lint,docker]
+
+stages:
+  - test
+
+test:
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    PY_COLORS: 1
+  stage: test
+  script:
+    molecule test

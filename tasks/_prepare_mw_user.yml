@@ -1,0 +1,33 @@
+---
+- name: Initialize user_template
+  set_fact:
+    user_template: >-
+     {{ mw_user_template 
+        | combine({
+            'name': mw_user_name,
+          })
+      }}
+- name: Get all users ssh public keys
+  block:
+    -
+      name: Initialize authorized_keys array
+      set_fact:
+        mw_authorized_keys: []
+    -
+      name: Combine all authorized keys into user {{ mw_user_name }}
+      include: _combine_mw_user_authorized_keys.yml
+      vars:
+        username: "{{ current_user }}"
+      loop: "{{ mw_user_valid_users }}"
+      loop_control:
+        loop_var: current_user
+
+- name: Add user to list
+  set_fact:
+    mgm_user_list: >-
+      {{ mgm_user_list + [
+          user_template | combine({
+            'authorized_keys': mw_authorized_keys
+          })
+          ]
+      }}
