@@ -3,26 +3,29 @@ image: docker:stable-dind
 services:
   - docker:dind
 
-before_script:
-  - apk add --no-cache
-    python3 python3-dev py3-pip py3-virtualenv gcc git curl build-base
-    autoconf automake py3-cryptography linux-headers
-    musl-dev libffi-dev openssl-dev openssh rust
-  - python3 -m venv /tmp/venv
-  - source /tmp/venv/bin/activate &&
-    pip install -U pip &&
-    CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip install ansible==4.1.0 molecule[lint,docker]
-
 stages:
+  - prepare
   - test
 
+build_image:
+  stage: prepare
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull ${CI_REGISTRY_IMAGE}:latest || true
+    - docker build --cache-from ${CI_REGISTRY_IMAGE}:latest -t current:latest .
+    - docker tag current:latest ${CI_REGISTRY_IMAGE}:latest
+    - docker push ${CI_REGISTRY_IMAGE}:latest
+  only:
+    refs:
+      - merge_requests
+      - main
+      - master
+
 test:
-  variables:
-    PY_COLORS: "1"
+  image: "${CI_REGISTRY_IMAGE}:latest"
   stage: test
   script:
-    - source /tmp/venv/bin/activate &&
-      molecule test
+    - source /opt/venv/bin/activate && molecule test
   only:
     - merge_requests
     - main
