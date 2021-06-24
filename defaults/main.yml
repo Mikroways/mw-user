@@ -1,0 +1,13 @@
+---
+mw_user_create_one_account_per_user: false
+mw_user_name: mikroways
+mw_user_url: https://mikroways.gitlab.io/public/ssh_keys/_users
+mw_user_key_url: https://mikroways.gitlab.io/public/ssh_keys/%user%.pub
+mw_user_enabled_users: []
+mw_user_template:
+  shell: '/bin/bash'
+  sudo:
+    hosts: ALL
+    as: ALL
+    commands: ALL
+    nopasswd: ye
