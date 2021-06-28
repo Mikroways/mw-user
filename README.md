@@ -40,7 +40,8 @@ contenido:
 
 ```yaml
 # from GitLab or other git-based scm
-- src: git@gitlab.com:mikroways/ansible/mw-user.git
+- name: mikroways.mw_user
+  src: git@gitlab.com:mikroways/ansible/mw-user.git
   scm: git
   version: "1.0.0" 
 ```
