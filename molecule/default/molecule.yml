@@ -31,7 +31,6 @@ provisioner:
         mw_user_enabled_users:
           - car
           - leandro
-    host_vars:
       all:
         ansible_user: ansible
 verifier:
