@@ -10,4 +10,4 @@ mw_user_template:
     hosts: ALL
     as: ALL
     commands: ALL
-    nopasswd: ye
+    nopasswd: yes
