@@ -1,7 +1,8 @@
+# tasks/_prepare_user.yml
 ---
 -
   name: Retrieve {{ username }} ssh pub key
-  include: _retrieve_username_pubkey.yml
+  include_tasks: _retrieve_username_pubkey.yml
 -
   name: Initialize user_template
   set_fact:

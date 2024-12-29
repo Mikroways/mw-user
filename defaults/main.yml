@@ -1,3 +1,4 @@
+# defaults/main.yml
 ---
 mw_user_create_one_account_per_user: false
 mw_user_name: mikroways
@@ -11,3 +12,18 @@ mw_user_template:
     as: ALL
     commands: ALL
     nopasswd: yes
+mw_user_extra_accounts: []
+mw_users_to_remove: []
+
+add_client_accounts: false
+client_user_create_one_account_per_user: false
+client_ssh_key_directory: "client_ssh_keys"
+client_admin_name: admin
+client_user_template:
+  shell: '/bin/bash'
+  sudo:
+    hosts: ALL
+    as: ALL
+    commands: ALL
+    nopasswd: yes
+client_user_extra_accounts: []

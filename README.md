@@ -32,6 +32,15 @@ con los usernames dados en esta lista.
   el sistema. El modelo de diccionario depende del role
 [grog.management-user](https://github.com/GROG/ansible-role-management-user)
 
+### Configuración para usuarios y administrador de cliente
+* **`add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
+* **`client_user_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta para cada usuario encontrado en el directorio especificado por client_ssh_key_directory. Si es false, no se crearán cuentas individuales para los usuarios, solo el admin user.
+* **`client_admin_name`:** por defecto es el nombre `admin`. Esta cuenta siempre será creada si se habilita la opción `add_client_accounts`. Todas las claves públicas asociadas se agregarán a esta cuenta.
+* **`client_ssh_key_directory`:** por defecto este directorio es client_ssh_keys, en la sección `files`. Este directorio debe contener las claves públicas (archivos con extensión .pub) para los usuarios del cliente. Cada subdirectorio dentro de este directorio representa un usuario, y cada archivo .pub dentro de esos subdirectorios es una clave pública asociada a ese usuario.
+* **`client_admin_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. Este modelo de diccionario depende del role
+  [grog.management-user](https://github.com/GROG/ansible-role-management-user) y puede ser personalizado para definir shell, permisos sudo, y otras configuraciones.
+* **`client_user_extra_accounts`:** lista opcional de usuarios adicionales que pueden ser creados. Este parámetro está disponible para agregar flexibilidad al manejo de usuarios.
+
 
 ## Ejemplo
 

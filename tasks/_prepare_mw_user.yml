@@ -1,3 +1,4 @@
+# tasks/_prepare_mw_user.yml
 ---
 - name: Initialize user_template
   set_fact:
@@ -7,6 +8,7 @@
             'name': mw_user_name,
           })
       }}
+
 - name: Get all users ssh public keys
   block:
     -
@@ -14,8 +16,8 @@
       set_fact:
         mw_authorized_keys: []
     -
-      name: Combine all authorized keys into user {{ mw_user_name }}
-      include: _combine_mw_user_authorized_keys.yml
+      name: Combine all authorized keys into user "{{ mw_user_name }}"
+      include_tasks: _combine_mw_user_authorized_keys.yml
       vars:
         username: "{{ current_user }}"
       loop: "{{ mw_user_valid_users }}"

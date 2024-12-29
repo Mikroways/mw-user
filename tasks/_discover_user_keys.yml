@@ -1,0 +1,26 @@
+# tasks/_discover_user_keys.yml
+---
+- name: Find public key in user's directory
+  find:
+    paths: "{{ client_ssh_key_directory }}/{{ user }}"
+    patterns: "*.pub"
+    file_type: file
+  register: found_keys
+
+- name: Fail if no public key is found
+  fail:
+    msg: "No public key found for user {{ user }} in directory {{ client_ssh_key_directory }}/{{ user }}"
+  when: found_keys.files | length == 0
+
+- name: Slurp the public key file
+  slurp:
+    src: "{{ found_keys.files[0].path }}"
+  register: user_key_content
+
+- name: Combine public key for user into a temporary variable
+  set_fact:
+    temp_users_with_keys: "{{ users_with_keys | default({}) | combine({user: (user_key_content.content | b64decode)}) }}"
+
+- name: Update users_with_keys
+  set_fact:
+    users_with_keys: "{{ temp_users_with_keys }}"
