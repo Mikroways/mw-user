@@ -29,17 +29,16 @@ los usuarios válidos de mikroways (los listados en `mw_user_url`) serán
 considerados. Caso contrario se realizará la intersección de usuarios válidosm
 con los usernames dados en esta lista.
 * **`mw_user_template`:** diccionario modelo de cómo será creado cada usuarioen
-  el sistema. El modelo de diccionario depende del role
-[grog.management-user](https://github.com/GROG/ansible-role-management-user)
+  el sistema. El modelo de diccionario depende del role [grog.management-user](https://github.com/GROG/ansible-role-management-user)
+* **`mw_users_to_remove`:** lista de usuarios que deben ser eliminados. Si un usuario en esta lista fue creado previamente, será eliminado automáticamente del sistema. Además, si las claves públicas de estos usuarios están autorizadas en la cuenta compartida `mw_user_name`, también se eliminarán de la lista `authorized_keys`.
 
 ### Configuración para usuarios y administrador de cliente
 * **`add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
 * **`client_user_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta para cada usuario encontrado en el directorio especificado por client_ssh_key_directory. Si es false, no se crearán cuentas individuales para los usuarios, solo el admin user.
 * **`client_admin_name`:** por defecto es el nombre `admin`. Esta cuenta siempre será creada si se habilita la opción `add_client_accounts`. Todas las claves públicas asociadas se agregarán a esta cuenta.
 * **`client_ssh_key_directory`:** por defecto este directorio es client_ssh_keys, en la sección `files`. Este directorio debe contener las claves públicas (archivos con extensión .pub) para los usuarios del cliente. Cada subdirectorio dentro de este directorio representa un usuario, y cada archivo .pub dentro de esos subdirectorios es una clave pública asociada a ese usuario.
-* **`client_admin_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. Este modelo de diccionario depende del role
+* **`client_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. Este modelo de diccionario depende del role
   [grog.management-user](https://github.com/GROG/ansible-role-management-user) y puede ser personalizado para definir shell, permisos sudo, y otras configuraciones.
-* **`client_user_extra_accounts`:** lista opcional de usuarios adicionales que pueden ser creados. Este parámetro está disponible para agregar flexibilidad al manejo de usuarios.
 
 
 ## Ejemplo
@@ -71,8 +70,8 @@ Luego, en un playbook es posible invocar el role usando:
 
 ## TODO
 
-* [ ] Eliminar usuarios que ya no trabajan con nosotrs. Pensaba que en el repo
-  de nustras claves, podemos agregar quienes se fueron y han trabajado con
+* [x] Eliminar usuarios que ya no trabajan con nosotros. Pensaba que en el repo
+  de nuestras claves, podemos agregar quienes se fueron y han trabajado con
   nosotros. De esta forma el playbook debe eliminar estos usuarios si fueron
   creados previamente
 * [ ] Mejorar los tests. Faltan probar algunos casos

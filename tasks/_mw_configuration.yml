@@ -16,6 +16,7 @@
     msg: There are no valid users retrieved from {{ mw_user_url }}
   when: valid_users | length == 0
 
+# Remove retired users
 - name: Create only named users
   set_fact:
     mw_user_valid_users: "{{ mw_user_enabled_users | intersect(valid_users) }}"
@@ -26,7 +27,26 @@
     mw_user_valid_users: "{{ valid_users }}"
   when: mw_user_enabled_users | length == 0
 
+- name: Identify retired Mikroways users
+  set_fact:
+    retired_users_to_remove: "{{ mw_users_to_remove | intersect(valid_users) }}"
+  when: mw_users_to_remove | length > 0
 
+- name: Filter valid users (exclude retired users)
+  set_fact:
+    mw_user_valid_users: "{{ valid_users | difference(retired_users_to_remove) }}"
+  when: mw_users_to_remove | length > 0
+
+- name: Remove retired Mikroways users
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: true
+  loop: "{{ mw_users_to_remove }}"
+  become: true
+  when: mw_users_to_remove | length > 0
+
+# Prepare users for creation
 - name: Prepare users
   block:
     -
@@ -36,6 +56,7 @@
     -
       name: Create common user "{{ mw_user_name }}"
       include_tasks: _prepare_mw_user.yml
+
     -
       name: Populate users in mgm_user_list
       include_tasks: _prepare_user.yml
@@ -45,7 +66,6 @@
       loop_control:
         loop_var: current_user
       when: mw_user_create_one_account_per_user
-
 
 - name: Create users with role grog.management-user
   import_role:

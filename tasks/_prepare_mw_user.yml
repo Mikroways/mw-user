@@ -1,28 +1,55 @@
 # tasks/_prepare_mw_user.yml
 ---
+
 - name: Initialize user_template
   set_fact:
     user_template: >-
-     {{ mw_user_template 
-        | combine({
-            'name': mw_user_name,
-          })
-      }}
+      {{ mw_user_template 
+         | combine({
+             'name': mw_user_name,
+           })
+       }}
 
-- name: Get all users ssh public keys
+- name: Initialize authorized_keys array
+  set_fact:
+    mw_authorized_keys: []
+
+- name: Collect retired users' public keys
   block:
-    -
-      name: Initialize authorized_keys array
+    - name: Initialize retired_keys array
       set_fact:
-        mw_authorized_keys: []
-    -
-      name: Combine all authorized keys into user "{{ mw_user_name }}"
-      include_tasks: _combine_mw_user_authorized_keys.yml
+        retired_keys: []
+
+    - name: Fetch retired users' keys
+      set_fact:
+        retired_keys: "{{ retired_keys + [{'key': key, 'state': 'absent'}] }}"
       vars:
-        username: "{{ current_user }}"
+        key: "{{ lookup('url', mw_user_key_url | replace('%user%', user), wantlist=True) | join('\n') }}"
+      loop: "{{ mw_users_to_remove }}"
+      loop_control:
+        loop_var: user
+      when: mw_users_to_remove | length > 0
+
+- name: Collect valid users' public keys
+  block:
+    - name: Initialize valid_keys array
+      set_fact:
+        valid_keys: []
+
+    - name: Fetch valid users' keys
+      set_fact:
+        valid_keys: "{{ valid_keys + [{'key': key, 'state': 'present'}] }}"
+      vars:
+        key: "{{ lookup('url', mw_user_key_url | replace('%user%', user), wantlist=True) | join('\n') }}"
       loop: "{{ mw_user_valid_users }}"
       loop_control:
-        loop_var: current_user
+        loop_var: user
+      when: mw_user_valid_users | length > 0
+
+- name: Combine valid and retired keys for shared user "{{ mw_user_name }}"
+  set_fact:
+    mw_authorized_keys: "{{ valid_keys + retired_keys }}"
+  when: valid_keys | length > 0 or retired_keys | length > 0
 
 - name: Add user to list
   set_fact:

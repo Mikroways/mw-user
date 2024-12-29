@@ -64,7 +64,7 @@
         user_keys: {}
 
     - name: Aggregate public keys for each user
-      include_tasks: _discover_user_keys.yml
+      include_tasks: _discover_client_user_keys.yml
       loop: "{{ valid_client_users }}"
       loop_control:
         loop_var: user
