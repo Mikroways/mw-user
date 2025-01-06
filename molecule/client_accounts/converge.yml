@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include client accounts in mw-user role
+      include_role:
+        name: mw-user
+      vars:
+        add_mw_accounts: false
+        add_client_accounts: true
+        client_admin_name: "admin"

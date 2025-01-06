@@ -1,0 +1,34 @@
+# tasks/_validate_keys.yml
+- name: Read public keys from directory
+  shell: "find {{ client_ssh_key_directory }} -name '*.pub' -exec cat {} +"
+  register: public_keys
+  failed_when: public_keys.rc != 0
+
+- name: Initialize invalid keys list
+  set_fact:
+    invalid_keys: []
+
+- name: Validate public keys
+  set_fact:
+    invalid_keys: "{{ invalid_keys + [item] }}"
+  with_items: "{{ public_keys.stdout_lines | default([]) }}"
+  when: not (
+    item.startswith('ssh-rsa') or
+    item.startswith('ssh-ed25519') or
+    item.startswith('ecdsa-sha2-nistp256') or
+    item.startswith('ecdsa-sha2-nistp384') or
+    item.startswith('ecdsa-sha2-nistp521') or
+    item.startswith('sk-ssh-ed25519@openssh.com') or
+    item.startswith('sk-ecdsa-sha2-nistp256@openssh.com')
+    )
+
+
+- name: Fail if invalid keys are found
+  fail:
+    msg: "The following keys are invalid: {{ invalid_keys }}"
+  when: invalid_keys | length > 0
+
+- name: Check if client keys directory is empty
+  fail:
+    msg: "Client SSH keys directory {{ client_ssh_key_directory }} is empty."
+  when: public_keys.stdout_lines | length == 0

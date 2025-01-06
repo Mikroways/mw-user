@@ -1,0 +1,97 @@
+# tasks/_client_configuration.yml
+---
+# Ensure the directory exists
+- name: Check if client keys directory exists
+  stat:
+    path: "{{ client_ssh_key_directory }}"
+    follow: true
+  register: client_key_dir
+  become: true
+
+- name: Fail if client keys directory does not exist
+  fail:
+    msg: "Client SSH keys directory {{ client_ssh_key_directory }} does not exist."
+  when: not client_key_dir.stat.exists
+
+
+# Shared Admin User Configuration
+- name: Configure shared admin user
+  block:
+    - name: Find all public keys for admin user
+      find:
+        paths: "{{ client_ssh_key_directory }}"
+        patterns: "*.pub"
+        file_type: file
+        recurse: true
+      register: public_keys
+
+
+    - name: Initialize admin authorized keys
+      set_fact:
+        admin_authorized_keys: []
+
+    - name: Validate admin public keys
+      include_tasks: _validate_keys.yml
+      vars:
+        keys_output: "{{ public_keys }}"
+
+    - name: Append public keys to authorized keys
+      set_fact:
+        admin_authorized_keys: "{{ admin_authorized_keys + [{'key': item, 'state': 'present'}] }}"
+      with_items: "{{ public_keys.stdout_lines }}"
+
+    - name: Create shared admin user
+      import_role:
+        name: grog.management-user
+      vars:
+        management_user_list:
+          - "{{ client_user_template | combine({
+                'name': client_admin_name,
+                'authorized_keys': admin_authorized_keys
+              })
+            }}"
+      become: true
+
+# Individual Client User Configuration
+- name: Configure individual client users
+  block:
+    - name: Fetch client user directories
+      find:
+        paths: "{{ client_ssh_key_directory }}"
+        file_type: directory
+        recurse: no
+      register: client_directories
+
+    - name: Extract valid client users
+      set_fact:
+        valid_client_users: "{{ client_directories.files | map(attribute='path') | map('basename') | list }}"
+
+    - name: Aggregate public keys for each user
+      include_tasks: _discover_client_user_keys.yml
+      loop: "{{ valid_client_users }}"
+      loop_control:
+        loop_var: user
+
+    - name: Initialize management user list
+      set_fact:
+        client_user_list: []
+
+    - name: Transform users_with_keys into grog.management_user list
+      set_fact:
+        management_user_list: "{{ management_user_list + [
+            client_user_template | combine({
+              'name': item.key,
+              'authorized_keys': [{'key': item.value, 'state': 'present'}]
+            })
+          ] }}"
+      loop: "{{ users_with_keys | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Create individual client users
+      import_role:
+        name: grog.management-user
+      vars:
+        management_user_list: "{{ client_user_list }}"
+      become: true
+  when: client_user_create_one_account_per_user

@@ -1,0 +1,89 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify mw_user is always created
+  hosts: all
+  gather_facts: false
+  vars:
+    mw_user_name: mikroways
+    mw_user_url: https://mikroways.gitlab.io/public/ssh_keys/_users
+  tasks:
+    -
+      name: Verify user {{ mw_user_name }} is created
+      command: "id {{ mw_user_name }}"
+      changed_when: false
+    -
+      name: Verify all users are created
+      command: "id {{ item }}"
+      changed_when: false
+      when: inventory_hostname in groups['multiple_users'] and
+        inventory_hostname not in groups['select_users']
+      loop: "{{ lookup('url', mw_user_url, wantlist=True) }}"
+    -
+      name: Verify selected users are created
+      command: "id {{ item }}"
+      changed_when: false
+      when: inventory_hostname in groups['multiple_users'] and
+        inventory_hostname in groups['select_users']
+      loop: "{{ mw_user_enabled_users }}"
+
+    -
+      name: Verify selected users are absent
+      command: "id {{ item }}"
+      changed_when: false
+      register: result
+      failed_when: result.rc == 0
+      when: inventory_hostname in groups['remove_users']
+      loop: "{{ mw_users_to_remove }}"
+
+    # Test Case: Validate users are removed
+    - name: Check if retired users are absent
+      shell: "id {{ item }} || true"
+      register: user_removal_check
+      with_items: "{{ mw_users_to_remove }}"
+      changed_when: false
+      when: inventory_hostname in groups['remove_users']
+
+    # Test Case: Validate users are removed
+    - name: Fetch users from URL
+      set_fact:
+        mw_user_valid_users: "{{ lookup('url', mw_user_url, wantlist=True) }}"
+      failed_when: mw_user_valid_users | length == 0
+      when: inventory_hostname in groups['remove_users']
+
+    - name: Check remaining users exist
+      command: id "{{ item }}"
+      register: remaining_users_check
+      with_items: "{{ mw_user_valid_users | difference(mw_users_to_remove) }}"
+      changed_when: false
+      failed_when: remaining_users_check.rc != 0
+      when: inventory_hostname in groups['remove_users']
+
+    - name: Check if retired users are absent
+      command: id "{{ item }}"
+      register: retired_users_check
+      with_items: "{{ mw_users_to_remove }}"
+      changed_when: true
+      failed_when: retired_users_check.rc == 0
+      when: inventory_hostname in groups['remove_users']
+
+    # Test Case: Validate SSH keys are removed
+    - name: Check for removed users' SSH keys in shared admin authorized_keys
+      shell: "grep -F '{{ item }}' /home/{{ mw_user_name }}/.ssh/authorized_keys"
+      register: ssh_key_removal_check
+      with_items: "{{ mw_users_to_remove }}"
+      changed_when: false
+      failed_when: ssh_key_removal_check.rc == 0
+      when: inventory_hostname in groups['remove_users']
+      become: true
+
+    # Test Case: Validate no residual directories or data
+    - name: Check for residual user directories
+      stat:
+        path: "/home/{{ item }}"
+      register: user_home_check
+      with_items: "{{ mw_users_to_remove }}"
+      changed_when: false
+      failed_when: user_home_check.stat.exists
+      when: inventory_hostname in groups['remove_users']
+      become: true

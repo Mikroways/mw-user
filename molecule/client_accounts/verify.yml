@@ -1,0 +1,16 @@
+---
+- name: Verify Client Accounts
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check if admin user exists
+      command: "id admin"
+      changed_when: false
+      when: inventory_hostname in groups['admin_only'] or inventory_hostname in groups['multiple_users']
+
+    - name: Verify all client users are created
+      command: "id {{ item }}"
+      changed_when: false
+      when: inventory_hostname in groups['multiple_users']
+      loop: "{{ lookup('fileglob', client_ssh_key_directory ~ '/*.pub') | map('basename') | map('splitext') | map('first') | list }}"
+

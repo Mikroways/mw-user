@@ -1,0 +1,19 @@
+# tasks/_prepare_user.yml
+---
+-
+  name: Retrieve {{ username }} ssh pub key
+  include_tasks: _retrieve_username_pubkey.yml
+-
+  name: Initialize user_template
+  set_fact:
+    user_template: >-
+     {{ mw_user_template 
+        | combine({
+            'name': username,
+            'authorized_keys': authorized_keys
+          })
+      }}
+
+- name: Add user to list
+  set_fact:
+    mgm_user_list: "{{ mgm_user_list + [ user_template ] }}"
