@@ -1,9 +1,0 @@
-# tasks/_prepare_authorized_keys.yml
----
-- name: Retrieve {{ username }} ssh pub key
-  include_tasks: _retrieve_username_pubkey.yml
-
-- name: Combine keys into authorized_keys
-  set_fact:
-    authorized_keys: "{{ authorized_keys + [ { 'key': item } ] }}"
-  loop: "{{ user_public_keys }}"
