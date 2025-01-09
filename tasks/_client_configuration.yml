@@ -8,6 +8,7 @@
   register: client_key_dir
   become: true
 
+# Fail quickly 
 - name: Fail if client keys directory does not exist
   fail:
     msg: "Client SSH keys directory {{ client_ssh_key_directory }} does not exist."
