@@ -1,31 +1,37 @@
 # tasks/_client_configuration.yml
 ---
-# Ensure the directory exists
-- name: Check if client keys directory exists
-  stat:
-    path: "{{ client_ssh_key_directory }}"
-    follow: true
-  register: client_key_dir
+# Ensure client SSH keys directory exists at the target location
+- name: Ensure client SSH keys directory exists at the target location
+  ansible.builtin.file:
+    path: /etc/ssh/client_keys
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
   become: true
 
-# Fail quickly 
-- name: Fail if client keys directory does not exist
-  fail:
-    msg: "Client SSH keys directory {{ client_ssh_key_directory }} does not exist."
-  when: not client_key_dir.stat.exists
-
+# Copy client keys directory directly to the target machine
+- name: Copy client SSH keys to the target machine
+  ansible.builtin.copy:
+    src: "{{ client_ssh_key_directory }}/"
+    dest: /etc/ssh/client_keys/
+    owner: root
+    group: root
+    mode: '0600'
+    directory_mode: '0700'
+    remote_src: no
+  become: true
 
 # Shared Admin User Configuration
 - name: Configure shared admin user
   block:
     - name: Find all public keys for admin user
       find:
-        paths: "{{ client_ssh_key_directory }}"
+        paths: /etc/ssh/client_keys/
         patterns: "*.pub"
         file_type: file
         recurse: true
       register: public_keys
-
 
     - name: Initialize admin authorized keys
       set_fact:
@@ -58,7 +64,7 @@
   block:
     - name: Fetch client user directories
       find:
-        paths: "{{ client_ssh_key_directory }}"
+        paths: /etc/ssh/client_keys/
         file_type: directory
         recurse: no
       register: client_directories

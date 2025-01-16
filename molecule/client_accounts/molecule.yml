@@ -25,10 +25,10 @@ provisioner:
     group_vars:
       admin_only:
         client_user_create_one_account_per_user: false
-        client_ssh_key_directory: "/etc/ansible/files/client_ssh_keys"
+        client_ssh_key_directory: "files/client_ssh_keys"
       multiple_users:
         client_user_create_one_account_per_user: true
-        client_ssh_key_directory: "/etc/ansible/files/client_ssh_keys"
+        client_ssh_key_directory: "files/client_ssh_keys"
 verifier:
   name: ansible
 lint: |

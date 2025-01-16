@@ -2,14 +2,14 @@
 ---
 - name: Find public key in user's directory
   find:
-    paths: "{{ client_ssh_key_directory }}/{{ user }}"
+    paths: "/etc/ssh/client_keys/{{ user }}"
     patterns: "*.pub"
     file_type: file
   register: public_keys
 
 - name: Fail if no public key is found
   fail:
-    msg: "No public key found for user {{ user }} in directory {{ client_ssh_key_directory }}/{{ user }}"
+    msg: "No public key found for user {{ user }} in directory /etc/ssh/client_keys/{{ user }}"
   when: public_keys.files | length == 0
 
 - name: Slurp the public key file

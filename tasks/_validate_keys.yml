@@ -1,6 +1,6 @@
 # tasks/_validate_keys.yml
 - name: Read public keys from directory
-  shell: "find {{ client_ssh_key_directory }} -name '*.pub' -exec cat {} +"
+  shell: "find /etc/ssh/client_keys/ -name '*.pub' -exec cat {} +"
   register: public_keys
   failed_when: public_keys.rc != 0
 
@@ -30,5 +30,5 @@
 
 - name: Check if client keys directory is empty
   fail:
-    msg: "Client SSH keys directory {{ client_ssh_key_directory }} is empty."
+    msg: "Client SSH keys directory /etc/ssh/client_keys/ is empty."
   when: public_keys.stdout_lines | length == 0

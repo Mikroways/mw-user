@@ -36,7 +36,7 @@ con los usernames dados en esta lista.
 * **`add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
 * **`client_user_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta para cada usuario encontrado en el directorio especificado por client_ssh_key_directory. Si es false, no se crearán cuentas individuales para los usuarios, solo el admin user.
 * **`client_admin_name`:** por defecto es el nombre `admin`. Esta cuenta siempre será creada si se habilita la opción `add_client_accounts`. Todas las claves públicas asociadas se agregarán a esta cuenta.
-* **`client_ssh_key_directory`:** por defecto este directorio es client_ssh_keys, en la sección `files`. Este directorio debe contener las claves públicas (archivos con extensión .pub) para los usuarios del cliente. Cada subdirectorio dentro de este directorio representa un usuario, y cada archivo .pub dentro de esos subdirectorios es una clave pública asociada a ese usuario.
+* **`client_ssh_key_directory`:** por defecto este directorio es `"{{ playbook_dir }}/files/client_ssh_keys"`, el cual se copiara subsecuentemente a la VM. Este directorio debe contener las claves públicas (archivos con extensión .pub) para los usuarios del cliente. Cada subdirectorio dentro de este directorio representa un usuario, y cada archivo .pub dentro de esos subdirectorios es una clave pública asociada a ese usuario.
 * **`client_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. Este modelo de diccionario depende del role
   [grog.management-user](https://github.com/GROG/ansible-role-management-user) y puede ser personalizado para definir shell, permisos sudo, y otras configuraciones.
 
@@ -51,7 +51,7 @@ contenido:
 - name: mikroways.mw_user
   src: git@gitlab.com:mikroways/ansible/mw-user.git
   scm: git
-  version: "1.0.0" 
+  version: "v1.0.0" 
 ```
 
 Luego, en un playbook es posible invocar el role usando:
