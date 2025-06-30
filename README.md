@@ -28,6 +28,7 @@ mikroways seleccionados serán autorizados a usar esta cuenta.
 los usuarios válidos de mikroways (los listados en `mw_user_url`) serán
 considerados. Caso contrario se realizará la intersección de usuarios válidosm
 con los usernames dados en esta lista.
+* **`mw_user_default_shell`:** shell a usar para los usuarios de mikroways
 * **`mw_user_template`:** diccionario modelo de cómo será creado cada usuarioen
   el sistema. El modelo de diccionario depende del role [grog.management-user](https://github.com/GROG/ansible-role-management-user)
 * **`mw_users_to_remove`:** lista de usuarios que deben ser eliminados. Si un usuario en esta lista fue creado previamente, será eliminado automáticamente del sistema. Además, si las claves públicas de estos usuarios están autorizadas en la cuenta compartida `mw_user_name`, también se eliminarán de la lista `authorized_keys`.
@@ -39,6 +40,7 @@ con los usernames dados en esta lista.
 * **`client_ssh_key_directory`:** por defecto este directorio es `"{{ playbook_dir }}/files/client_ssh_keys"`, el cual se copiara subsecuentemente a la VM. Este directorio debe contener las claves públicas (archivos con extensión .pub) para los usuarios del cliente. Cada subdirectorio dentro de este directorio representa un usuario, y cada archivo .pub dentro de esos subdirectorios es una clave pública asociada a ese usuario.
 * **`client_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. Este modelo de diccionario depende del role
   [grog.management-user](https://github.com/GROG/ansible-role-management-user) y puede ser personalizado para definir shell, permisos sudo, y otras configuraciones.
+* **`client_user_default_shell`:** shell a usar para los clientes.
 
 
 ## Ejemplo
@@ -49,8 +51,6 @@ contenido:
 ```yaml
 # from GitLab or other git-based scm
 - name: mikroways.mw_user
-  src: git@gitlab.com:mikroways/ansible/mw-user.git
-  scm: git
   version: "v1.0.0" 
 ```
 
@@ -74,4 +74,6 @@ Luego, en un playbook es posible invocar el role usando:
   de nuestras claves, podemos agregar quienes se fueron y han trabajado con
   nosotros. De esta forma el playbook debe eliminar estos usuarios si fueron
   creados previamente
+* [ ] Usar nombres de variables en sintonía con el nombre del role. Un namespace
+  que siga el nombre del role en cada variable como prefijo.
 * [ ] Mejorar los tests. Faltan probar algunos casos

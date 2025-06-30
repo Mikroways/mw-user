@@ -6,8 +6,9 @@ mw_user_name: mikroways
 mw_user_url: https://mikroways.gitlab.io/public/ssh_keys/_users
 mw_user_key_url: https://mikroways.gitlab.io/public/ssh_keys/%user%.pub
 mw_user_enabled_users: []
+mw_user_default_shell: '/bin/bash'
 mw_user_template:
-  shell: '/bin/bash'
+  shell: '{{ mw_user_default_shell }}'
   sudo:
     hosts: ALL
     as: ALL
@@ -20,8 +21,9 @@ add_client_accounts: false
 client_user_create_one_account_per_user: false
 client_ssh_key_directory: "{{ playbook_dir }}/files/client_ssh_keys"
 client_admin_name: admin
+client_user_default_shell: '/bin/bash'
 client_user_template:
-  shell: '/bin/bash'
+  shell: '{{ client_user_default_shell}}'
   sudo:
     hosts: ALL
     as: ALL
