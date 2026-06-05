@@ -32,7 +32,6 @@ con los usernames dados en esta lista.
   el sistema. El modelo de diccionario depende del role
 [grog.management-user](https://github.com/GROG/ansible-role-management-user)
 
-
 ## Ejemplo
 
 Crear un archivo de requerimientos de galaxy `requirements.yml` con el siguiente
@@ -58,6 +57,23 @@ Luego, en un playbook es posible invocar el role usando:
       become: true
       tags:
         - user
+```
+
+## Desarrollo
+
+Las pruebas usan [molecule](https://molecule.readthedocs.io/) con Docker. Para correrlas localmente:
+
+```bash
+uv sync                    # instala las dependencias
+uv run molecule converge   # crea los contenedores y aplica el rol
+uv run molecule verify     # verifica que el rol hizo lo esperado
+uv run molecule destroy    # destruye los contenedores
+```
+
+O el ciclo completo:
+
+```bash
+uv run molecule test       # dependency + create + converge + verify + destroy
 ```
 
 ## TODO

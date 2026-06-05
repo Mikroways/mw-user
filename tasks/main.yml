@@ -33,10 +33,10 @@
         mgm_user_list: []
     -
       name: Create common user {{ mw_user_name }}
-      include: _prepare_mw_user.yml
+      include_tasks: _prepare_mw_user.yml
     -
       name: Populate users in mgm_user_list
-      include: _prepare_user.yml
+      include_tasks: _prepare_user.yml
       vars:
         username: "{{ current_user }}"
       loop: "{{ mw_user_valid_users }}"

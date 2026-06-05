@@ -1,0 +1,12 @@
+[project]
+name = "mw-user"
+version = "0.1.0"
+description = "Ansible role para gestionar usuarios de Mikroways"
+requires-python = ">=3.10,<3.12"
+dependencies = [
+    "ansible~=8.0",
+    "molecule~=6.0",
+    "molecule-plugins[docker]~=23.0",
+    "requests<2.32",
+    "yamllint>=1.26",
+]
