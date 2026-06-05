@@ -26,9 +26,9 @@ mikroways seleccionados serán autorizados a usar esta cuenta.
   usuario. El valor por defecto es `https://mikroways.gitlab.io/public/ssh_keys/%user%.pub`. Puede observarse que el valor de `%user%` es dinámico y será reemplazado por el valor de un usuario válido de mikroways.
 * **`mw_user_enabled_users`:** lista de usuarios habilitados. Si es vacío, todos
 los usuarios válidos de mikroways (los listados en `mw_user_url`) serán
-considerados. Caso contrario se realizará la intersección de usuarios válidosm
+considerados. Caso contrario se realizará la intersección de usuarios válidos
 con los usernames dados en esta lista.
-* **`mw_user_template`:** diccionario modelo de cómo será creado cada usuarioen
+* **`mw_user_template`:** diccionario modelo de cómo será creado cada usuario en
   el sistema. El modelo de diccionario depende del role
 [grog.management-user](https://github.com/GROG/ansible-role-management-user)
 
@@ -42,7 +42,7 @@ contenido:
 - name: mikroways.mw_user
   src: git@gitlab.com:mikroways/ansible/mw-user.git
   scm: git
-  version: "1.0.0" 
+  version: "1.0.1"
 ```
 
 Luego, en un playbook es posible invocar el role usando:
@@ -78,8 +78,8 @@ uv run molecule test       # dependency + create + converge + verify + destroy
 
 ## TODO
 
-* [ ] Eliminar usuarios que ya no trabajan con nosotrs. Pensaba que en el repo
-  de nustras claves, podemos agregar quienes se fueron y han trabajado con
+* [ ] Eliminar usuarios que ya no trabajan con nosotros. Pensaba que en el repo
+  de nuestras claves, podemos agregar quienes se fueron y han trabajado con
   nosotros. De esta forma el playbook debe eliminar estos usuarios si fueron
   creados previamente
-* [ ] Mejorar los tests. Faltan probar algunos casos
+* [x] Mejorar los tests
