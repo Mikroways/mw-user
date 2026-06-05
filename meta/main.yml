@@ -2,22 +2,31 @@ galaxy_info:
   author: Christian Rodriguez
   description: Configure one or more users as sudoers with Mikroways pub keys
   company: Mikroways
-  role_name: mw_user  # if absent directory name hosting role is used instead
+  role_name: mw_user # if absent directory name hosting role is used instead
   namespace: mikroways
 
   license: GPL-2.0-or-later
 
-  min_ansible_version: 2.9
+  min_ansible_version: "2.9"
 
   platforms:
-  - name: Ubuntu
-    versions:
-    - 20.04
-    - 18.04
-  - name: Debian
-    versions:
-    - 10
+    - name: Ubuntu
+      versions:
+        - focal
+        - bionic
+    - name: Debian
+      versions:
+        - buster
 
-  galaxy_tags: []
+  galaxy_tags:
+    - users
+    - ssh
+    - sudo
+    - authorized_keys
+    - mikroways
 
-dependencies: []
+dependencies:
+  - role: grog.management-user
+    version: v1.3.3
+  - role: GROG.package
+    version: v1.4.1

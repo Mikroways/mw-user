@@ -1,11 +1,6 @@
 ---
+# Versiones sincronizadas con meta/main.yml
 - name: grog.management-user
   version: v1.3.3
-- name: GROG.user
-  version: v1.3.1
-- name: GROG.sudo
-  version: v1.6.0
-- name: GROG.authorized-key
-  version: v1.1.5
 - name: GROG.package
   version: v1.4.1
