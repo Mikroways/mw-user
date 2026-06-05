@@ -15,18 +15,17 @@ build_image:
     - docker build --cache-from ${CI_REGISTRY_IMAGE}:latest -t current:latest .
     - docker tag current:latest ${CI_REGISTRY_IMAGE}:latest
     - docker push ${CI_REGISTRY_IMAGE}:latest
-  only:
-    refs:
-      - merge_requests
-      - main
-      - master
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes:
+        - Dockerfile
+        - pyproject.toml
+        - uv.lock
 
 test:
   image: "${CI_REGISTRY_IMAGE}:latest"
   stage: test
   script:
     - molecule test
-  only:
-    - merge_requests
-    - main
-    - master
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
