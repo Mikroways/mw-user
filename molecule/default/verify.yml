@@ -1,28 +1,137 @@
 ---
-# This is an example playbook to execute Ansible tests.
-
 - name: Verify mw_user is always created
   hosts: all
   gather_facts: false
   vars:
     mw_user_name: mikroways
     mw_user_url: https://mikroways.gitlab.io/public/ssh_keys/_users
+    mw_user_key_url: https://mikroways.gitlab.io/public/ssh_keys/%user%.pub
   tasks:
     -
       name: Verify user {{ mw_user_name }} is created
       command: "id {{ mw_user_name }}"
       changed_when: false
     -
+      name: Verify shell is /bin/bash for {{ mw_user_name }}
+      command: "getent passwd {{ mw_user_name }}"
+      register: mw_passwd
+      changed_when: false
+      failed_when: "'/bin/bash' not in mw_passwd.stdout"
+    -
+      name: Verify sudo NOPASSWD for {{ mw_user_name }}
+      shell: "grep -rw '{{ mw_user_name }}' /etc/sudoers.d/ | grep -c 'NOPASSWD'"
+      register: sudo_check
+      changed_when: false
+      become: true
+      failed_when: sudo_check.stdout | int == 0
+    -
+      name: Verify authorized_keys exists for {{ mw_user_name }}
+      stat:
+        path: "/home/{{ mw_user_name }}/.ssh/authorized_keys"
+      register: authorized_keys_stat
+      become: true
+    -
+      name: Fail if authorized_keys does not exist
+      fail:
+        msg: "authorized_keys not found for {{ mw_user_name }}"
+      when: not authorized_keys_stat.stat.exists
+    -
+      name: Verify authorized_keys is not empty
+      command: "grep -c . /home/{{ mw_user_name }}/.ssh/authorized_keys"
+      register: key_count
+      changed_when: false
+      become: true
+      failed_when: key_count.rc != 0 or key_count.stdout | int == 0
+    -
+      name: Verify authorized_keys has no empty lines
+      shell: "grep -c '^$' /home/{{ mw_user_name }}/.ssh/authorized_keys || true"
+      register: empty_lines
+      changed_when: false
+      become: true
+      failed_when: empty_lines.stdout | int > 0
+    -
+      name: Get expected key count for mikroways in select_users mode
+      set_fact:
+        expected_mw_key_count: >-
+          {{ (expected_mw_key_count | default(0) | int) +
+             (lookup('url', mw_user_key_url | replace('%user%', item), wantlist=True)
+              | reject('equalto', '') | list | length) }}
+      when: inventory_hostname in groups['select_users']
+      loop: "{{ mw_user_enabled_users }}"
+    -
+      name: Verify mikroways authorized_keys count matches enabled users only
+      shell: "grep -c . /home/{{ mw_user_name }}/.ssh/authorized_keys"
+      register: actual_mw_key_count
+      changed_when: false
+      become: true
+      when: inventory_hostname in groups['select_users']
+      failed_when: actual_mw_key_count.stdout | int != expected_mw_key_count | int
+    -
       name: Verify all users are created
       command: "id {{ item }}"
       changed_when: false
-      when: inventory_hostname in groups['multiple_users'] and
-        inventory_hostname not in groups['select_users']
-      loop: "{{ lookup('url', mw_user_url, wantlist=True) }}"
+      when:
+        - inventory_hostname in groups['multiple_users']
+        - inventory_hostname not in groups['select_users']
+      loop: "{{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list }}"
     -
       name: Verify selected users are created
       command: "id {{ item }}"
       changed_when: false
-      when: inventory_hostname in groups['multiple_users'] and
-        inventory_hostname in groups['select_users']
+      when:
+        - inventory_hostname in groups['multiple_users']
+        - inventory_hostname in groups['select_users']
       loop: "{{ mw_user_enabled_users }}"
+    -
+      name: Verify individual users are NOT created in one-user mode
+      command: "id {{ item }}"
+      register: user_check
+      changed_when: false
+      failed_when: user_check.rc == 0
+      when: inventory_hostname not in groups['multiple_users']
+      loop: "{{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list }}"
+    -
+      name: Verify authorized_keys for individual users
+      stat:
+        path: "/home/{{ item }}/.ssh/authorized_keys"
+      register: user_ak
+      become: true
+      when:
+        - inventory_hostname in groups['multiple_users']
+      loop: >-
+        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+           if inventory_hostname not in groups['select_users']
+           else mw_user_enabled_users }}
+    -
+      name: Fail if authorized_keys missing for individual user
+      fail:
+        msg: "authorized_keys not found for {{ item.item }}"
+      when:
+        - inventory_hostname in groups['multiple_users']
+        - not item.stat.exists
+      loop: "{{ user_ak.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item }}"
+    -
+      name: Verify shell is /bin/bash for individual users
+      command: "getent passwd {{ item }}"
+      register: user_passwd
+      changed_when: false
+      failed_when: "'/bin/bash' not in user_passwd.stdout"
+      when: inventory_hostname in groups['multiple_users']
+      loop: >-
+        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+           if inventory_hostname not in groups['select_users']
+           else mw_user_enabled_users }}
+    -
+      name: Verify sudo NOPASSWD for individual users
+      shell: "grep -rw '{{ item }}' /etc/sudoers.d/ | grep -c 'NOPASSWD'"
+      register: user_sudo_check
+      changed_when: false
+      become: true
+      failed_when: user_sudo_check.stdout | int == 0
+      when: inventory_hostname in groups['multiple_users']
+      loop: >-
+        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+           if inventory_hostname not in groups['select_users']
+           else mw_user_enabled_users }}
