@@ -28,5 +28,8 @@ galaxy_info:
 dependencies:
   - role: grog.management-user
     version: v1.3.3
+    management_user_list: []
+    management_user_list_host: []
+    management_user_list_group: []
   - role: GROG.package
     version: v1.4.1
