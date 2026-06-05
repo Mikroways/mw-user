@@ -1,7 +1,7 @@
 ---
 -
   name: Retrieve {{ username }} ssh pub key
-  include: _retrieve_username_pubkey.yml
+  import_tasks: _retrieve_username_pubkey.yml
 -
   name: Initialize user_template
   set_fact:
