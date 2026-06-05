@@ -1,11 +1,9 @@
 FROM docker:stable-dind
-RUN apk add --no-cache \
-      python3 python3-dev py3-pip py3-virtualenv gcc git curl build-base \
-      autoconf automake py3-cryptography linux-headers \
-      musl-dev libffi-dev openssl-dev openssh rust \
-    && python3 -m venv /opt/venv \
-    && source /opt/venv/bin/activate \
-    && pip install -U pip \
-    && CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip install \
-      ansible==4.1.0 molecule[lint,docker]
-ENV PY_COLORS="1"
+RUN apk add --no-cache python3 python3-dev curl bash git
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+WORKDIR /project
+COPY pyproject.toml uv.lock ./
+RUN uv sync
+ENV VIRTUAL_ENV=/project/.venv
+ENV PATH="/project/.venv/bin:$PATH"

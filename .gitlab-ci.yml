@@ -25,7 +25,7 @@ test:
   image: "${CI_REGISTRY_IMAGE}:latest"
   stage: test
   script:
-    - source /opt/venv/bin/activate && molecule test
+    - molecule test
   only:
     - merge_requests
     - main
