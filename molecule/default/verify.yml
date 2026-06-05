@@ -113,6 +113,55 @@
       loop_control:
         label: "{{ item.item }}"
     -
+      name: Verify authorized_keys is not empty for individual users
+      command: "grep -c . /home/{{ item }}/.ssh/authorized_keys"
+      register: user_key_count
+      changed_when: false
+      become: true
+      failed_when: user_key_count.rc != 0 or user_key_count.stdout | int == 0
+      when: inventory_hostname in groups['multiple_users']
+      loop: >-
+        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+           if inventory_hostname not in groups['select_users']
+           else mw_user_enabled_users }}
+    -
+      name: Verify authorized_keys has no empty lines for individual users
+      shell: "grep -c '^$' /home/{{ item }}/.ssh/authorized_keys || true"
+      register: user_empty_lines
+      changed_when: false
+      become: true
+      failed_when: user_empty_lines.stdout | int > 0
+      when: inventory_hostname in groups['multiple_users']
+      loop: >-
+        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+           if inventory_hostname not in groups['select_users']
+           else mw_user_enabled_users }}
+    -
+      name: Read authorized_keys content for individual users
+      slurp:
+        src: "/home/{{ item }}/.ssh/authorized_keys"
+      register: user_ak_content
+      become: true
+      when: inventory_hostname in groups['multiple_users']
+      loop: >-
+        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+           if inventory_hostname not in groups['select_users']
+           else mw_user_enabled_users }}
+    -
+      name: Verify individual user authorized_keys contains only their own keys
+      assert:
+        that:
+          - (item.content | b64decode | trim).split('\n') | reject('equalto', '') | list | length ==
+            lookup('url', mw_user_key_url | replace('%user%', item.item), wantlist=True)
+            | reject('equalto', '') | list | length
+        fail_msg: "authorized_keys key count mismatch for {{ item.item }}"
+      when:
+        - inventory_hostname in groups['multiple_users']
+        - not (item.skipped | default(false))
+      loop: "{{ user_ak_content.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item }}"
+    -
       name: Verify shell is /bin/bash for individual users
       command: "getent passwd {{ item }}"
       register: user_passwd
