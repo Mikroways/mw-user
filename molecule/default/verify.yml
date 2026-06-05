@@ -50,137 +50,137 @@
       become: true
       failed_when: empty_lines.stdout | int > 0
     -
-      name: Get expected key count for mikroways in select_users mode
-      set_fact:
-        expected_mw_key_count: >-
-          {{ (expected_mw_key_count | default(0) | int) +
-             (lookup('url', mw_user_key_url | replace('%user%', item), wantlist=True)
-              | reject('equalto', '') | list | length) }}
+      name: Verify mikroways authorized_keys in select_users mode
+      block:
+        -
+          name: Get expected key count for mikroways in select_users mode
+          set_fact:
+            expected_mw_key_count: >-
+              {{ (expected_mw_key_count | default(0) | int) +
+                 (lookup('url', mw_user_key_url | replace('%user%', item), wantlist=True)
+                  | reject('equalto', '') | list | length) }}
+          loop: "{{ mw_user_enabled_users }}"
+        -
+          name: Verify mikroways authorized_keys count matches enabled users only
+          shell: "grep -c . /home/{{ mw_user_name }}/.ssh/authorized_keys"
+          register: actual_mw_key_count
+          changed_when: false
+          become: true
+          failed_when: actual_mw_key_count.stdout | int != expected_mw_key_count | int
       when: inventory_hostname in groups['select_users']
-      loop: "{{ mw_user_enabled_users }}"
-    -
-      name: Verify mikroways authorized_keys count matches enabled users only
-      shell: "grep -c . /home/{{ mw_user_name }}/.ssh/authorized_keys"
-      register: actual_mw_key_count
-      changed_when: false
-      become: true
-      when: inventory_hostname in groups['select_users']
-      failed_when: actual_mw_key_count.stdout | int != expected_mw_key_count | int
-    -
-      name: Verify all users are created
-      command: "id {{ item }}"
-      changed_when: false
-      when:
-        - inventory_hostname in groups['multiple_users']
-        - inventory_hostname not in groups['select_users']
-      loop: "{{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list }}"
-    -
-      name: Verify selected users are created
-      command: "id {{ item }}"
-      changed_when: false
-      when:
-        - inventory_hostname in groups['multiple_users']
-        - inventory_hostname in groups['select_users']
-      loop: "{{ mw_user_enabled_users }}"
     -
       name: Verify individual users are NOT created in one-user mode
-      command: "id {{ item }}"
-      register: user_check
-      changed_when: false
-      failed_when: user_check.rc == 0
+      block:
+        -
+          name: Verify individual users are NOT created
+          command: "id {{ item }}"
+          register: user_check
+          changed_when: false
+          failed_when: user_check.rc == 0
+          loop: "{{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list }}"
       when: inventory_hostname not in groups['multiple_users']
-      loop: "{{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list }}"
     -
-      name: Verify authorized_keys for individual users
-      stat:
-        path: "/home/{{ item }}/.ssh/authorized_keys"
-      register: user_ak
-      become: true
-      when:
-        - inventory_hostname in groups['multiple_users']
-      loop: >-
-        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
-           if inventory_hostname not in groups['select_users']
-           else mw_user_enabled_users }}
-    -
-      name: Fail if authorized_keys missing for individual user
-      fail:
-        msg: "authorized_keys not found for {{ item.item }}"
-      when:
-        - inventory_hostname in groups['multiple_users']
-        - not item.stat.exists
-      loop: "{{ user_ak.results | default([]) }}"
-      loop_control:
-        label: "{{ item.item }}"
-    -
-      name: Verify authorized_keys is not empty for individual users
-      command: "grep -c . /home/{{ item }}/.ssh/authorized_keys"
-      register: user_key_count
-      changed_when: false
-      become: true
-      failed_when: user_key_count.rc != 0 or user_key_count.stdout | int == 0
+      name: Verify individual users in multiple_users mode
+      block:
+        -
+          name: Verify all users are created
+          block:
+            -
+              name: Verify all users are created
+              command: "id {{ item }}"
+              changed_when: false
+              loop: "{{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list }}"
+          when: inventory_hostname not in groups['select_users']
+        -
+          name: Verify selected users are created
+          block:
+            - name: Verify selected users are created
+              command: "id {{ item }}"
+              changed_when: false
+              loop: "{{ mw_user_enabled_users }}"
+          when: inventory_hostname in groups['select_users']
+        -
+          name: Verify authorized_keys for individual users
+          stat:
+            path: "/home/{{ item }}/.ssh/authorized_keys"
+          register: user_ak
+          become: true
+          loop: >-
+            {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+               if inventory_hostname not in groups['select_users']
+               else mw_user_enabled_users }}
+        -
+          name: Verify authorized_keys exists for all individual users
+          assert:
+            quiet: true
+            that: item.stat.exists
+            fail_msg: "authorized_keys not found for {{ item.item }}"
+          loop: "{{ user_ak.results | default([]) }}"
+          loop_control:
+            label: "{{ item.item }}"
+        -
+          name: Verify authorized_keys is not empty for individual users
+          command: "grep -c . /home/{{ item }}/.ssh/authorized_keys"
+          register: user_key_count
+          changed_when: false
+          become: true
+          failed_when: user_key_count.rc != 0 or user_key_count.stdout | int == 0
+          loop: >-
+            {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+               if inventory_hostname not in groups['select_users']
+               else mw_user_enabled_users }}
+        -
+          name: Verify authorized_keys has no empty lines for individual users
+          shell: "grep -c '^$' /home/{{ item }}/.ssh/authorized_keys || true"
+          register: user_empty_lines
+          changed_when: false
+          become: true
+          failed_when: user_empty_lines.stdout | int > 0
+          loop: >-
+            {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+               if inventory_hostname not in groups['select_users']
+               else mw_user_enabled_users }}
+        -
+          name: Read authorized_keys content for individual users
+          slurp:
+            src: "/home/{{ item }}/.ssh/authorized_keys"
+          register: user_ak_content
+          become: true
+          loop: >-
+            {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+               if inventory_hostname not in groups['select_users']
+               else mw_user_enabled_users }}
+        -
+          name: Verify individual user authorized_keys contains only their own keys
+          assert:
+            quiet: true
+            that:
+              - (item.content | b64decode | trim).split('\n') | reject('equalto', '') | list | length ==
+                lookup('url', mw_user_key_url | replace('%user%', item.item), wantlist=True)
+                | reject('equalto', '') | list | length
+            fail_msg: "authorized_keys key count mismatch for {{ item.item }}"
+          loop: "{{ user_ak_content.results | default([]) }}"
+          loop_control:
+            label: "{{ item.item }}"
+        -
+          name: Verify shell is /bin/bash for individual users
+          command: "getent passwd {{ item }}"
+          register: user_passwd
+          changed_when: false
+          failed_when: "'/bin/bash' not in user_passwd.stdout"
+          loop: >-
+            {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+               if inventory_hostname not in groups['select_users']
+               else mw_user_enabled_users }}
+        -
+          name: Verify sudo NOPASSWD for individual users
+          shell: "grep -rw '{{ item }}' /etc/sudoers.d/ | grep -c 'NOPASSWD'"
+          register: user_sudo_check
+          changed_when: false
+          become: true
+          failed_when: user_sudo_check.stdout | int == 0
+          loop: >-
+            {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
+               if inventory_hostname not in groups['select_users']
+               else mw_user_enabled_users }}
       when: inventory_hostname in groups['multiple_users']
-      loop: >-
-        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
-           if inventory_hostname not in groups['select_users']
-           else mw_user_enabled_users }}
-    -
-      name: Verify authorized_keys has no empty lines for individual users
-      shell: "grep -c '^$' /home/{{ item }}/.ssh/authorized_keys || true"
-      register: user_empty_lines
-      changed_when: false
-      become: true
-      failed_when: user_empty_lines.stdout | int > 0
-      when: inventory_hostname in groups['multiple_users']
-      loop: >-
-        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
-           if inventory_hostname not in groups['select_users']
-           else mw_user_enabled_users }}
-    -
-      name: Read authorized_keys content for individual users
-      slurp:
-        src: "/home/{{ item }}/.ssh/authorized_keys"
-      register: user_ak_content
-      become: true
-      when: inventory_hostname in groups['multiple_users']
-      loop: >-
-        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
-           if inventory_hostname not in groups['select_users']
-           else mw_user_enabled_users }}
-    -
-      name: Verify individual user authorized_keys contains only their own keys
-      assert:
-        that:
-          - (item.content | b64decode | trim).split('\n') | reject('equalto', '') | list | length ==
-            lookup('url', mw_user_key_url | replace('%user%', item.item), wantlist=True)
-            | reject('equalto', '') | list | length
-        fail_msg: "authorized_keys key count mismatch for {{ item.item }}"
-      when:
-        - inventory_hostname in groups['multiple_users']
-        - not (item.skipped | default(false))
-      loop: "{{ user_ak_content.results | default([]) }}"
-      loop_control:
-        label: "{{ item.item }}"
-    -
-      name: Verify shell is /bin/bash for individual users
-      command: "getent passwd {{ item }}"
-      register: user_passwd
-      changed_when: false
-      failed_when: "'/bin/bash' not in user_passwd.stdout"
-      when: inventory_hostname in groups['multiple_users']
-      loop: >-
-        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
-           if inventory_hostname not in groups['select_users']
-           else mw_user_enabled_users }}
-    -
-      name: Verify sudo NOPASSWD for individual users
-      shell: "grep -rw '{{ item }}' /etc/sudoers.d/ | grep -c 'NOPASSWD'"
-      register: user_sudo_check
-      changed_when: false
-      become: true
-      failed_when: user_sudo_check.stdout | int == 0
-      when: inventory_hostname in groups['multiple_users']
-      loop: >-
-        {{ lookup('url', mw_user_url, wantlist=True) | reject('equalto', '') | list
-           if inventory_hostname not in groups['select_users']
-           else mw_user_enabled_users }}
