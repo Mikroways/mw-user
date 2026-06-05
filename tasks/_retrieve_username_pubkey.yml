@@ -4,6 +4,7 @@
     user_public_keys: >-
       {{ lookup('url', mw_user_key_url
          | replace('%user%', username), wantlist=True)
+         | reject('equalto', '') | list
       }}
     authorized_keys: []
 
