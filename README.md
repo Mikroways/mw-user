@@ -91,3 +91,7 @@ uv run molecule test       # dependency + create + converge + verify + destroy
   nosotros. De esta forma el playbook debe eliminar estos usuarios si fueron
   creados previamente
 * [x] Mejorar los tests
+* [ ] Pinear versión de uv en el Dockerfile en lugar de bajar el script de
+  instalación sin versión fija
+* [ ] Desacoplar verify.yml de la red: los `lookup('url', ...)` fallan si el
+  servidor de claves está caído, aunque el rol haya funcionado correctamente

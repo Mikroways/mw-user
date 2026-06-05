@@ -1,4 +1,4 @@
-image: docker:stable-dind
+image: docker:27-dind
 
 services:
   - docker:dind
