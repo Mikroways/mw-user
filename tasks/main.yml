@@ -44,9 +44,29 @@
         loop_var: current_user
       when: mw_user_create_one_account_per_user
 
-- name: Create users with role grog.management-user
+- name: Create users
   import_role:
-    name: grog.management-user
+    name: GROG.user
   become: true
   vars:
-    management_user_list: "{{ mgm_user_list }}"
+    user_list: "{{ mgm_user_list }}"
+    user_list_host: []
+    user_list_group: []
+
+- name: Set authorized keys for users
+  import_role:
+    name: GROG.authorized-key
+  become: true
+  vars:
+    authorized_key_list: "{{ mgm_user_list }}"
+    authorized_key_list_host: []
+    authorized_key_list_group: []
+
+- name: Set sudo for users
+  import_role:
+    name: GROG.sudo
+  become: true
+  vars:
+    sudo_list: "{{ mgm_user_list }}"
+    sudo_list_host: []
+    sudo_list_group: []
