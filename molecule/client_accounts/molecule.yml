@@ -27,11 +27,21 @@ provisioner:
   inventory:
     group_vars:
       admin_only:
-        client_user_create_one_account_per_user: false
-        client_ssh_key_directory: "files/client_ssh_keys"
+        mw_user_customer_create_one_account_per_user: false
+        mw_user_customer_users:
+          - name: user1
+            key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIErQer6XoCjc9d2JN46jjtAZHsDiz7FDWVwstI8a8THx user1"
+          - name: user2
+            key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMXxlhX8Vm2fM67RA2R7fiZPGvTCuoy/DOtoW1wVBcko user2"
       multiple_users:
-        client_user_create_one_account_per_user: true
-        client_ssh_key_directory: "files/client_ssh_keys"
+        mw_user_customer_create_one_account_per_user: true
+        mw_user_customer_users:
+          - name: user1
+            key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIErQer6XoCjc9d2JN46jjtAZHsDiz7FDWVwstI8a8THx user1"
+          - name: user2
+            key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMXxlhX8Vm2fM67RA2R7fiZPGvTCuoy/DOtoW1wVBcko user2"
+          - name: user3
+            key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGnvRgNEQNqcuFWD4YKsqGNEW7wUuU98a3KcM699n8eJ user3"
 verifier:
   name: ansible
 lint: |

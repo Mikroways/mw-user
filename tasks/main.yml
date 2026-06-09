@@ -9,4 +9,4 @@
 # Conditionally include client user tasks
 - name: Include client user configuration
   include_tasks: _client_configuration.yml
-  when: add_client_accounts | bool
+  when: mw_user_add_client_accounts | bool

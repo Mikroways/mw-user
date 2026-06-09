@@ -8,5 +8,5 @@
         name: mw-user
       vars:
         add_mw_accounts: false
-        add_client_accounts: true
-        client_admin_name: "admin"
+        mw_user_add_client_accounts: true
+        mw_user_customer_admin_name: "admin"

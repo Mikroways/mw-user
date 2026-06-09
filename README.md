@@ -38,12 +38,20 @@ a continuación:
 
 ### Configuración para usuarios y administrador de cliente
 
-* **`add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
-* **`client_user_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta para cada usuario encontrado en el directorio especificado por `client_ssh_key_directory`. Si es false, no se crearán cuentas individuales para los usuarios, solo el admin user.
-* **`client_admin_name`:** por defecto es el nombre `admin`. Esta cuenta siempre será creada si se habilita la opción `add_client_accounts`. Todas las claves públicas asociadas se agregarán a esta cuenta.
-* **`client_ssh_key_directory`:** por defecto este directorio es `"{{ playbook_dir }}/files/client_ssh_keys"`. Debe contener las claves públicas (archivos con extensión `.pub`) para los usuarios del cliente. Cada subdirectorio dentro representa un usuario.
-* **`client_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. El modelo de diccionario depende del role
-  [grog.management-user](https://github.com/GROG/ansible-role-management-user) y puede ser personalizado para definir shell, permisos sudo, y otras configuraciones.
+* **`mw_user_add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
+* **`mw_user_customer_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta individual para cada entrada en `mw_user_customer_users`. Si es false, solo se crea el usuario admin compartido.
+* **`mw_user_customer_admin_name`:** por defecto es `admin`. Esta cuenta siempre se crea cuando `mw_user_add_client_accounts` es true. Recibe las claves públicas de todos los usuarios en `mw_user_customer_users`.
+* **`mw_user_customer_users`:** lista de usuarios del cliente. Cada entrada debe tener `name` (nombre de usuario) y `key` (clave pública SSH). Por defecto es una lista vacía.
+
+  ```yaml
+  mw_user_customer_users:
+    - name: alice
+      key: "ssh-ed25519 AAAA... alice"
+    - name: bob
+      key: "ssh-ed25519 AAAA... bob"
+  ```
+
+* **`mw_user_customer_template`:** diccionario modelo de cómo será creado cada usuario del cliente en el sistema. Puede personalizarse para definir shell, permisos sudo, y otras configuraciones.
 
 ## Ejemplo
 
