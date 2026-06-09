@@ -22,6 +22,10 @@ platforms:
     groups:
       - select_users
       - multiple_users
+  - name: mw-user-remove-users
+    image: ubuntu:20.04
+    groups:
+      - remove_users
 provisioner:
   name: ansible
   env:
@@ -32,6 +36,11 @@ provisioner:
         mw_user_create_one_account_per_user: true
       select_users:
         mw_user_enabled_users:
+          - car
+          - leandro
+      remove_users:
+        mw_user_create_one_account_per_user: true
+        mw_users_to_remove:
           - car
           - leandro
       all:

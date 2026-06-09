@@ -34,6 +34,16 @@ a continuación:
 * **`mw_user_template`:** diccionario modelo de cómo será creado cada usuario en
   el sistema. El modelo de diccionario depende del role
   [grog.management-user](https://github.com/GROG/ansible-role-management-user)
+* **`mw_users_to_remove`:** lista de usuarios que deben ser eliminados. Si un usuario en esta lista fue creado previamente, será eliminado automáticamente del sistema. Además, si las claves públicas de estos usuarios están autorizadas en la cuenta compartida `mw_user_name`, también se eliminarán de la lista `authorized_keys`.
+
+### Configuración para usuarios y administrador de cliente
+
+* **`add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
+* **`client_user_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta para cada usuario encontrado en el directorio especificado por `client_ssh_key_directory`. Si es false, no se crearán cuentas individuales para los usuarios, solo el admin user.
+* **`client_admin_name`:** por defecto es el nombre `admin`. Esta cuenta siempre será creada si se habilita la opción `add_client_accounts`. Todas las claves públicas asociadas se agregarán a esta cuenta.
+* **`client_ssh_key_directory`:** por defecto este directorio es `"{{ playbook_dir }}/files/client_ssh_keys"`. Debe contener las claves públicas (archivos con extensión `.pub`) para los usuarios del cliente. Cada subdirectorio dentro representa un usuario.
+* **`client_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. El modelo de diccionario depende del role
+  [grog.management-user](https://github.com/GROG/ansible-role-management-user) y puede ser personalizado para definir shell, permisos sudo, y otras configuraciones.
 
 ## Ejemplo
 
@@ -86,7 +96,7 @@ uv run molecule test       # dependency + create + converge + verify + destroy
 
 ## TODO
 
-* [ ] Eliminar usuarios que ya no trabajan con nosotros. Pensaba que en el repo
+* [x] Eliminar usuarios que ya no trabajan con nosotros. Pensaba que en el repo
   de nuestras claves, podemos agregar quienes se fueron y han trabajado con
   nosotros. De esta forma el playbook debe eliminar estos usuarios si fueron
   creados previamente
