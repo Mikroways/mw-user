@@ -2,6 +2,7 @@
 - name: Read public keys from directory
   shell: "find /etc/ssh/client_keys/ -name '*.pub' -exec cat {} +"
   register: public_keys
+  changed_when: false
   failed_when: public_keys.rc != 0
 
 - name: Initialize invalid keys list
