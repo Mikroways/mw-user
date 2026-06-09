@@ -53,25 +53,31 @@ a continuación:
 
 * **`mw_user_customer_template`:** diccionario modelo de cómo será creado cada usuario del cliente en el sistema. Puede personalizarse para definir shell, permisos sudo, y otras configuraciones.
 
-## Ejemplo
+## Instalación
 
-Agregar este role al `requirements.yml` del proyecto:
+Desde Ansible Galaxy:
+
+```bash
+ansible-galaxy role install mikroways.mw_user
+```
+
+O agregando el role al `requirements.yml` del proyecto:
 
 ```yaml
 roles:
   - name: mikroways.mw_user
-    src: git@gitlab.com:mikroways/ansible/mw-user.git
-    scm: git
-    version: "2.0.0"
+    version: "v2.0.0"
 ```
 
-Instalar el role y sus dependencias:
+Y luego:
 
 ```bash
 ansible-galaxy install -r requirements.yml
 ```
 
-En un playbook:
+## Ejemplo
+
+Uso básico en un playbook (solo cuentas mikroways):
 
 ```yaml
 - name: Some useful playbook
@@ -84,6 +90,35 @@ En un playbook:
       tags:
         - user
 ```
+
+Agregando una cuenta de administrador compartida para el cliente con cuentas individuales:
+
+```yaml
+- name: Some useful playbook
+  hosts: all
+  gather_facts: true
+  tasks:
+    - import_role:
+        name: mikroways.mw_user
+      become: true
+      vars:
+        mw_user_add_client_accounts: true
+        mw_user_customer_admin_name: admin
+        mw_user_customer_create_one_account_per_user: true
+        mw_user_customer_users:
+          - name: alice
+            key: "ssh-ed25519 AAAA... alice@example.com"
+          - name: bob
+            key: "ssh-ed25519 AAAA... bob@example.com"
+      tags:
+        - user
+```
+
+Esto crea:
+
+* Una cuenta `admin` con las claves de todos los usuarios (`alice` y `bob`)
+* Una cuenta individual `alice` con su propia clave
+* Una cuenta individual `bob` con su propia clave
 
 ## Desarrollo
 
