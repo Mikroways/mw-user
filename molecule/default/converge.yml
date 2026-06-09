@@ -1,6 +1,7 @@
 ---
 - name: Converge
   hosts: all
+  become: true
   tasks:
     - name: "Include mw-user"
       include_role:

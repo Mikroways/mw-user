@@ -1,14 +1,19 @@
 # Role mw-user
 
+> Este proyecto surgió del repositorio privado [mikroways/ansible/mw-user](https://gitlab.com/mikroways/ansible/mw-user) en GitLab.
+
 Este role maneja los usuarios de mikroways y sus claves públicas de forma
 consistente. Para ello, al incluir el role, por defecto se creará una cuenta
-mikroways por defecto con las claves públicas de todos los integrantes
+mikroways con las claves públicas de todos los integrantes
 disponibles en el repositorio [git de claves ssh](https://gitlab.com/mikroways/public/ssh_keys/).
 
 ## Requerimientos
 
-Este role depende de otros pero deberían instalarse automáticamente con
-`ansible-galaxy`.
+Este role depende de los roles GROG declarados en `meta/main.yml`.
+`ansible-galaxy` los instala automáticamente al instalar este role.
+
+Para desarrollo local, `uv sync` + molecule se encargan de todo
+automáticamente (ver sección [Desarrollo](#desarrollo)).
 
 ## Variables
 
@@ -17,44 +22,64 @@ a continuación:
 
 * **`mw_user_create_one_account_per_user`:** su valor por defecto es `false`. Si es
   true creará una cuenta para cada usuario. Sino solamente creará la cuenta
-`mw_user_name`.
+  `mw_user_name`.
 * **`mw_user_name`:** por defecto es el nombre `mikroways`. Esta cuenta siempre
   será creada por este role. Todas las claves públicas de los miembros de
-mikroways seleccionados serán autorizados a usar esta cuenta.
+  mikroways seleccionados serán autorizados a usar esta cuenta.
 * **`mw_user_url`:** por defecto es `https://mikroways.gitlab.io/public/ssh_keys/_users`. Esta url devuelve un listado de usuarios válidos de mikroways.
 * **`mw_user_key_url`:** url template para descargar la clave pública de un
   usuario. El valor por defecto es `https://mikroways.gitlab.io/public/ssh_keys/%user%.pub`. Puede observarse que el valor de `%user%` es dinámico y será reemplazado por el valor de un usuario válido de mikroways.
 * **`mw_user_enabled_users`:** lista de usuarios habilitados. Si es vacío, todos
-los usuarios válidos de mikroways (los listados en `mw_user_url`) serán
-considerados. Caso contrario se realizará la intersección de usuarios válidosm
-con los usernames dados en esta lista.
-* **`mw_user_template`:** diccionario modelo de cómo será creado cada usuarioen
-  el sistema. El modelo de diccionario depende del role [grog.management-user](https://github.com/GROG/ansible-role-management-user)
+  los usuarios válidos de mikroways (los listados en `mw_user_url`) serán
+  considerados. Caso contrario se realizará la intersección de usuarios válidos
+  con los usernames dados en esta lista.
+* **`mw_user_template`:** diccionario modelo de cómo será creado cada usuario en
+  el sistema. El modelo de diccionario depende del role
+  [grog.management-user](https://github.com/GROG/ansible-role-management-user)
 * **`mw_users_to_remove`:** lista de usuarios que deben ser eliminados. Si un usuario en esta lista fue creado previamente, será eliminado automáticamente del sistema. Además, si las claves públicas de estos usuarios están autorizadas en la cuenta compartida `mw_user_name`, también se eliminarán de la lista `authorized_keys`.
 
 ### Configuración para usuarios y administrador de cliente
-* **`add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
-* **`client_user_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta para cada usuario encontrado en el directorio especificado por client_ssh_key_directory. Si es false, no se crearán cuentas individuales para los usuarios, solo el admin user.
-* **`client_admin_name`:** por defecto es el nombre `admin`. Esta cuenta siempre será creada si se habilita la opción `add_client_accounts`. Todas las claves públicas asociadas se agregarán a esta cuenta.
-* **`client_ssh_key_directory`:** por defecto este directorio es `"{{ playbook_dir }}/files/client_ssh_keys"`, el cual se copiara subsecuentemente a la VM. Este directorio debe contener las claves públicas (archivos con extensión .pub) para los usuarios del cliente. Cada subdirectorio dentro de este directorio representa un usuario, y cada archivo .pub dentro de esos subdirectorios es una clave pública asociada a ese usuario.
-* **`client_user_template`:** diccionario modelo de cómo será creado el usuario administrador del cliente en el sistema. Este modelo de diccionario depende del role
-  [grog.management-user](https://github.com/GROG/ansible-role-management-user) y puede ser personalizado para definir shell, permisos sudo, y otras configuraciones.
 
+* **`mw_user_add_client_accounts`:** su valor por defecto es `false`. Si es true, se creará una o más cuentas para el cliente. Si es false, se omite la sección para el cliente.
+* **`mw_user_customer_create_one_account_per_user`:** su valor por defecto es `false`. Si es true, se creará una cuenta individual para cada entrada en `mw_user_customer_users`. Si es false, solo se crea el usuario admin compartido.
+* **`mw_user_customer_admin_name`:** por defecto es `admin`. Esta cuenta siempre se crea cuando `mw_user_add_client_accounts` es true. Recibe las claves públicas de todos los usuarios en `mw_user_customer_users`.
+* **`mw_user_customer_users`:** lista de usuarios del cliente. Cada entrada debe tener `name` (nombre de usuario) y `key` (clave pública SSH). Por defecto es una lista vacía.
+
+  ```yaml
+  mw_user_customer_users:
+    - name: alice
+      key: "ssh-ed25519 AAAA... alice"
+    - name: bob
+      key: "ssh-ed25519 AAAA... bob"
+  ```
+
+* **`mw_user_customer_template`:** diccionario modelo de cómo será creado cada usuario del cliente en el sistema. Puede personalizarse para definir shell, permisos sudo, y otras configuraciones.
+
+## Instalación
+
+Desde Ansible Galaxy:
+
+```bash
+ansible-galaxy role install mikroways.mw_user
+```
+
+O agregando el role al `requirements.yml` del proyecto:
+
+```yaml
+roles:
+  - name: mikroways.mw_user
+    version: "v2.0.0"
+```
+
+Y luego:
+
+```bash
+ansible-galaxy install -r requirements.yml
+```
 
 ## Ejemplo
 
-Crear un archivo de requerimientos de galaxy `requirements.yml` con el siguiente
-contenido:
-
-```yaml
-# from GitLab or other git-based scm
-- name: mikroways.mw_user
-  src: git@gitlab.com:mikroways/ansible/mw-user.git
-  scm: git
-  version: "v1.0.0" 
-```
-
-Luego, en un playbook es posible invocar el role usando:
+Uso básico en un playbook (solo cuentas mikroways):
 
 ```yaml
 - name: Some useful playbook
@@ -68,10 +93,60 @@ Luego, en un playbook es posible invocar el role usando:
         - user
 ```
 
+Agregando una cuenta de administrador compartida para el cliente con cuentas individuales:
+
+```yaml
+- name: Some useful playbook
+  hosts: all
+  gather_facts: true
+  tasks:
+    - import_role:
+        name: mikroways.mw_user
+      become: true
+      vars:
+        mw_user_add_client_accounts: true
+        mw_user_customer_admin_name: admin
+        mw_user_customer_create_one_account_per_user: true
+        mw_user_customer_users:
+          - name: alice
+            key: "ssh-ed25519 AAAA... alice@example.com"
+          - name: bob
+            key: "ssh-ed25519 AAAA... bob@example.com"
+      tags:
+        - user
+```
+
+Esto crea:
+
+* Una cuenta `admin` con las claves de todos los usuarios (`alice` y `bob`)
+* Una cuenta individual `alice` con su propia clave
+* Una cuenta individual `bob` con su propia clave
+
+## Desarrollo
+
+Las pruebas usan [molecule](https://molecule.readthedocs.io/) con Docker. Para correrlas localmente:
+
+```bash
+uv sync                    # instala las dependencias
+uv run molecule converge   # crea los contenedores y aplica el rol
+uv run molecule verify     # verifica que el rol hizo lo esperado
+uv run molecule destroy    # destruye los contenedores
+```
+
+O el ciclo completo:
+
+```bash
+uv run molecule test       # dependency + create + converge + verify + destroy
+```
+
 ## TODO
 
 * [x] Eliminar usuarios que ya no trabajan con nosotros. Pensaba que en el repo
   de nuestras claves, podemos agregar quienes se fueron y han trabajado con
   nosotros. De esta forma el playbook debe eliminar estos usuarios si fueron
   creados previamente
-* [ ] Mejorar los tests. Faltan probar algunos casos
+* [x] Mejorar los tests
+* [ ] Pinear versión de uv en el Dockerfile en lugar de bajar el script de
+  instalación sin versión fija
+* [ ] Desacoplar verify.yml de la red: los `lookup('url', ...)` fallan si el
+  servidor de claves está caído, aunque el rol haya funcionado correctamente

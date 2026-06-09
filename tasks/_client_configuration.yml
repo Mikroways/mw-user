@@ -1,104 +1,86 @@
 # tasks/_client_configuration.yml
 ---
-# Ensure client SSH keys directory exists at the target location
-- name: Ensure client SSH keys directory exists at the target location
-  ansible.builtin.file:
-    path: /etc/ssh/client_keys
-    state: directory
-    owner: root
-    group: root
-    mode: '0700'
-  become: true
+- name: Initialize admin authorized keys
+  set_fact:
+    admin_authorized_keys: []
 
-# Copy client keys directory directly to the target machine
-- name: Copy client SSH keys to the target machine
-  ansible.builtin.copy:
-    src: "{{ client_ssh_key_directory }}/"
-    dest: /etc/ssh/client_keys/
-    owner: root
-    group: root
-    mode: '0600'
-    directory_mode: '0700'
-    remote_src: no
-  become: true
+- name: Collect all customer keys for admin user
+  set_fact:
+    admin_authorized_keys: "{{ admin_authorized_keys + [{'key': item.key, 'state': 'present'}] }}"
+  loop: "{{ mw_user_customer_users }}"
 
-# Shared Admin User Configuration
-- name: Configure shared admin user
-  block:
-    - name: Find all public keys for admin user
-      find:
-        paths: /etc/ssh/client_keys/
-        patterns: "*.pub"
-        file_type: file
-        recurse: true
-      register: public_keys
+- name: Build admin user list
+  set_fact:
+    customer_admin_list:
+      - "{{ mw_user_customer_template | combine({
+              'name': mw_user_customer_admin_name,
+              'authorized_keys': admin_authorized_keys
+            })
+          }}"
 
-    - name: Initialize admin authorized keys
-      set_fact:
-        admin_authorized_keys: []
+- name: Create shared admin user
+  include_role:
+    name: GROG.user
+  vars:
+    user_list: "{{ customer_admin_list }}"
+    user_list_host: []
+    user_list_group: []
 
-    - name: Validate admin public keys
-      include_tasks: _validate_keys.yml
-      vars:
-        keys_output: "{{ public_keys }}"
+- name: Set authorized keys for shared admin user
+  include_role:
+    name: GROG.authorized-key
+  vars:
+    authorized_key_list: "{{ customer_admin_list }}"
+    authorized_key_list_host: []
+    authorized_key_list_group: []
 
-    - name: Append public keys to authorized keys
-      set_fact:
-        admin_authorized_keys: "{{ admin_authorized_keys + [{'key': item, 'state': 'present'}] }}"
-      with_items: "{{ public_keys.stdout_lines }}"
+- name: Set sudo for shared admin user
+  include_role:
+    name: GROG.sudo
+  vars:
+    sudo_list: "{{ customer_admin_list }}"
+    sudo_list_host: []
+    sudo_list_group: []
 
-    - name: Create shared admin user
-      import_role:
-        name: grog.management-user
-      vars:
-        management_user_list:
-          - "{{ client_user_template | combine({
-                'name': client_admin_name,
-                'authorized_keys': admin_authorized_keys
-              })
-            }}"
-      become: true
-
-# Individual Client User Configuration
 - name: Configure individual client users
   block:
-    - name: Fetch client user directories
-      find:
-        paths: /etc/ssh/client_keys/
-        file_type: directory
-        recurse: no
-      register: client_directories
-
-    - name: Extract valid client users
+    - name: Initialize individual client user list
       set_fact:
-        valid_client_users: "{{ client_directories.files | map(attribute='path') | map('basename') | list }}"
+        customer_user_list: []
 
-    - name: Aggregate public keys for each user
-      include_tasks: _discover_client_user_keys.yml
-      loop: "{{ valid_client_users }}"
-      loop_control:
-        loop_var: user
-
-    - name: Initialize management user list
+    - name: Build individual client user list
       set_fact:
-        client_user_list: []
-
-    - name: Transform users_with_keys into grog.management_user list
-      set_fact:
-        management_user_list: "{{ management_user_list + [
-            client_user_template | combine({
-              'name': item.key,
-              'authorized_keys': [{'key': item.value, 'state': 'present'}]
-            })
-          ] }}"
-      loop: "{{ users_with_keys | dict2items }}"
-      loop_control:
-        label: "{{ item.key }}"
+        customer_user_list: >-
+          {{ customer_user_list + [
+              mw_user_customer_template | combine({
+                'name': item.name,
+                'authorized_keys': [{'key': item.key, 'state': 'present'}]
+              })
+            ]
+          }}
+      loop: "{{ mw_user_customer_users }}"
 
     - name: Create individual client users
-      import_role:
-        name: grog.management-user
+      include_role:
+        name: GROG.user
       vars:
-        management_user_list: "{{ client_user_list }}"
-      become: true
-  when: client_user_create_one_account_per_user
+        user_list: "{{ customer_user_list }}"
+        user_list_host: []
+        user_list_group: []
+
+    - name: Set authorized keys for individual client users
+      include_role:
+        name: GROG.authorized-key
+      vars:
+        authorized_key_list: "{{ customer_user_list }}"
+        authorized_key_list_host: []
+        authorized_key_list_group: []
+
+    - name: Set sudo for individual client users
+      include_role:
+        name: GROG.sudo
+      vars:
+        sudo_list: "{{ customer_user_list }}"
+        sudo_list_host: []
+        sudo_list_group: []
+  when: mw_user_customer_create_one_account_per_user | bool
