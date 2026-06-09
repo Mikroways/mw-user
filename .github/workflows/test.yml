@@ -17,4 +17,4 @@ jobs:
       - name: Install dependencies
         run: uv sync
       - name: Run molecule
-        run: uv run molecule test
+        run: uv run molecule test --all
