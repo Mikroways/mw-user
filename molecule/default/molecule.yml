@@ -3,6 +3,7 @@ dependency:
   name: galaxy
   options:
     role-file: meta/requirements.yml
+    roles-path: "${MOLECULE_PROJECT_DIRECTORY}/molecule/default/roles"
 driver:
   name: docker
 platforms:
@@ -27,6 +28,8 @@ platforms:
       - remove_users
 provisioner:
   name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
   inventory:
     group_vars:
       multiple_users:
