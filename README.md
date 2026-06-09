@@ -1,5 +1,7 @@
 # Role mw-user
 
+> Este proyecto surgió del repositorio privado [mikroways/ansible/mw-user](https://gitlab.com/mikroways/ansible/mw-user) en GitLab.
+
 Este role maneja los usuarios de mikroways y sus claves públicas de forma
 consistente. Para ello, al incluir el role, por defecto se creará una cuenta
 mikroways con las claves públicas de todos los integrantes
