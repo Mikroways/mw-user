@@ -47,17 +47,38 @@
         admin_authorized_keys: "{{ admin_authorized_keys + [{'key': item, 'state': 'present'}] }}"
       with_items: "{{ public_keys.stdout_lines }}"
 
-    - name: Create shared admin user
-      import_role:
-        name: grog.management-user
-      vars:
-        management_user_list:
+    - name: Build admin user list
+      set_fact:
+        admin_user_list:
           - "{{ client_user_template | combine({
                 'name': client_admin_name,
                 'authorized_keys': admin_authorized_keys
               })
             }}"
-      become: true
+
+    - name: Create shared admin user
+      include_role:
+        name: GROG.user
+      vars:
+        user_list: "{{ admin_user_list }}"
+        user_list_host: []
+        user_list_group: []
+
+    - name: Set authorized keys for shared admin user
+      include_role:
+        name: GROG.authorized-key
+      vars:
+        authorized_key_list: "{{ admin_user_list }}"
+        authorized_key_list_host: []
+        authorized_key_list_group: []
+
+    - name: Set sudo for shared admin user
+      include_role:
+        name: GROG.sudo
+      vars:
+        sudo_list: "{{ admin_user_list }}"
+        sudo_list_host: []
+        sudo_list_group: []
 
 # Individual Client User Configuration
 - name: Configure individual client users
@@ -79,13 +100,13 @@
       loop_control:
         loop_var: user
 
-    - name: Initialize management user list
+    - name: Initialize client user list
       set_fact:
         client_user_list: []
 
-    - name: Transform users_with_keys into grog.management_user list
+    - name: Transform users_with_keys into client user list
       set_fact:
-        management_user_list: "{{ management_user_list + [
+        client_user_list: "{{ client_user_list + [
             client_user_template | combine({
               'name': item.key,
               'authorized_keys': [{'key': item.value, 'state': 'present'}]
@@ -96,9 +117,26 @@
         label: "{{ item.key }}"
 
     - name: Create individual client users
-      import_role:
-        name: grog.management-user
+      include_role:
+        name: GROG.user
       vars:
-        management_user_list: "{{ client_user_list }}"
-      become: true
+        user_list: "{{ client_user_list }}"
+        user_list_host: []
+        user_list_group: []
+
+    - name: Set authorized keys for individual client users
+      include_role:
+        name: GROG.authorized-key
+      vars:
+        authorized_key_list: "{{ client_user_list }}"
+        authorized_key_list_host: []
+        authorized_key_list_group: []
+
+    - name: Set sudo for individual client users
+      include_role:
+        name: GROG.sudo
+      vars:
+        sudo_list: "{{ client_user_list }}"
+        sudo_list_host: []
+        sudo_list_group: []
   when: client_user_create_one_account_per_user
